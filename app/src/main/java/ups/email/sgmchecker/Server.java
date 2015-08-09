@@ -6,13 +6,13 @@ package ups.email.sgmchecker;
 import java.util.ArrayList;
 
 public class Server {
-    String name;
-    String gameType;
-    String IP;
-    int port;
-    String playerCount;
-    String maxPlayerCount;
-    ArrayList<String> players;
+    private String name;
+    private String gameType;
+    private String IP;
+    private int port;
+    private String playerCount;
+    private String maxPlayerCount;
+    private ArrayList<String> players;
 
     public Server(String name, String gameType, String IP, int port) {
         this.name = name;

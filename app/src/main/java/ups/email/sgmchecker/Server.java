@@ -1,7 +1,6 @@
-/**
- * Created by Chris on 7/15/2015.
- */
 package ups.email.sgmchecker;
+
+import android.widget.Button;
 
 import java.util.ArrayList;
 
@@ -10,6 +9,8 @@ public class Server {
     private String gameType;
     private String IP;
     private int port;
+    private int buttonID;
+    private Button button;
     private String playerCount;
     private String maxPlayerCount;
     private ArrayList<String> players;
@@ -19,6 +20,12 @@ public class Server {
         this.gameType = gameType;
         this.IP = IP;
         this.port = port;
+        this.playerCount = "0";
+        this.maxPlayerCount = "36";
+    }
+
+    public void setButton(Button button) {
+        this.button = button;
     }
 
     public void setPlayerCount(String playerCount) {
@@ -31,6 +38,14 @@ public class Server {
 
     public void setPlayers(ArrayList<String> players) {
         this.players = players;
+    }
+
+    public void setButtonID(int ID) {
+        this.buttonID = ID;
+    }
+
+    public Button getButton() {
+        return button;
     }
 
     public String getName() {
@@ -47,6 +62,10 @@ public class Server {
 
     public int getPort() {
         return port;
+    }
+
+    public int getButtonID() {
+        return buttonID;
     }
 
     public String getPlayerCount() {

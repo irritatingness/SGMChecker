@@ -3,36 +3,30 @@ package ups.email.sgmchecker;
 import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Iterator;
 import java.util.Scanner;
 
+import android.app.ActionBar;
+import android.content.Intent;
 import android.os.StrictMode;
 import android.os.Bundle;
 import android.support.v7.app.ActionBarActivity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.widget.ExpandableListView;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.Button;
 import android.view.MenuInflater;
+import android.widget.LinearLayout;
 import android.widget.Toast;
 import android.content.Context;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 
-import net.sourceforge.queried.PlayerInfo;
-import net.sourceforge.queried.QueriEd;
-import net.sourceforge.queried.ServerInfo;
-
 
 public class MainActivity extends ActionBarActivity {
 
-    ExpandableListAdapter listAdapter;
-    ExpandableListView expListView;
-    List<String> listDataHeader;
-    HashMap<String, List<String>> listDataChild;
-    ArrayList<Server> servers = new ArrayList<Server>();
-    private static Iterator iter;
+    public static ArrayList<Server> servers = new ArrayList<>();
+    public static LinearLayout layout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,36 +38,85 @@ public class MainActivity extends ActionBarActivity {
             StrictMode.setThreadPolicy(thpolicy);
         }
 
-        try {
-            URL url = new URL("https://raw.githubusercontent.com/irritatingness/SGMChecker/master/SERVERS");
-            Scanner s = new Scanner(url.openStream());
-            while (s.hasNextLine() == true) {
-                String[] tokens = s.nextLine().split(",");
-                Server tempServer = new Server(tokens[0], "HL2", tokens[1], 27015);
-                servers.add(tempServer);
+        //Only do this if it's the first time we're creating the view, based on servers list being empty
+        if (servers.isEmpty()) {
+            //Load server-list from GitHub page
+            try {
+                URL url = new URL("https://raw.githubusercontent.com/irritatingness/SGMChecker/master/SERVERS");
+                Scanner s = new Scanner(url.openStream());
+                while (s.hasNextLine()) {
+                    String[] tokens = s.nextLine().split(",");
+                    Server tempServer = new Server(tokens[0], "HL2", tokens[1], 27015);
+                    servers.add(tempServer);
+                }
+                s.close();
+
             }
-            s.close();
-        }
-        catch(IOException ex) {
-            // there was some connection problem, or the file did not exist on the server,
-            // or your URL was not in the right format.
-            ex.printStackTrace(); // for now, simply output it.
+            catch(IOException ex) {
+                Toast.makeText(MainActivity.this, "Could not load server list.", Toast.LENGTH_LONG).show();
+            }
         }
 
-        // get the listview
-        expListView = (ExpandableListView) findViewById(R.id.lvExp);
+        //Create the view
+        int count = 0;
+        layout = new LinearLayout(this);
+        layout.setOrientation(LinearLayout.VERTICAL);
+        layout.setLayoutParams(new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
 
-        // preparing list data
-        prepareListData();
+        for (Server temp : servers) {
 
-        listAdapter = new ExpandableListAdapter(this, listDataHeader, listDataChild);
+            LinearLayout row = new LinearLayout(this);
+            row.setLayoutParams(new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
 
-        // setting list adapter
-        expListView.setAdapter(listAdapter);
+            Button button = new Button(this);
+            button.setLayoutParams(new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+            button.setText(temp.getName() + "    " + temp.getPlayerCount() + "/" + temp.getMaxPlayerCount() + " players");
+            button.setId(count);
+            button.setLayoutParams(new ActionBar.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+
+            //Click listener! This is where we'll add new activities on press that will list all players on a server.
+            button.setOnClickListener(new Button.OnClickListener() {
+                public void onClick(View v) {
+                    int id  = v.getId();
+                    for (Server temp2 : servers) {
+                        if (temp2.getButtonID() == id) {
+                            //Gonna wanna make a new activity to show the players on the server.
+                            //Call method to do so, pass it server's player list
+                            displayPlayers(temp2.getPlayers(), temp2.getName());
+                        }
+                    }
+                }
+            });
+
+            button.setOnLongClickListener(new Button.OnLongClickListener() {
+                public boolean onLongClick(View v) {
+                    int id  = v.getId();
+                    for (Server temp2 : servers) {
+                        if (temp2.getButtonID() == id) {
+                            //Update button by viewID!
+                            Button pressed = (Button)findViewById(temp2.getButtonID());
+                            pressed.setText(temp2.getName() + "    " + temp2.getPlayerCount() + "/" + temp2.getMaxPlayerCount() + " players");
+                        }
+                    }
+                    return false;
+                }
+            });
+
+            temp.setButton(button);
+
+            row.addView(button);
+
+            temp.setButtonID(button.getId());
+
+            count++;
+            layout.addView(row);
+        }
+        setContentView(layout);
+        new GetServerInfoTask().execute(servers);
     }
 
     @Override
-    public boolean onCreateOptionsMenu(Menu menu) {
+    public boolean onCreateOptionsMenu(Menu menu){
         // Inflate the menu items for use in the action bar
         MenuInflater inflater = getMenuInflater();
         inflater.inflate(R.menu.main_activity_actions, menu);
@@ -82,41 +125,31 @@ public class MainActivity extends ActionBarActivity {
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
-        // Handle action bar item clicks here. The action bar will
-        // automatically handle clicks on the Home/Up button, so long
-        // as you specify a parent activity in AndroidManifest.xml.
+        //Get item selected
         int id = item.getItemId();
 
+        //If the item selected is the refresh button
         if (id == R.id.action_refresh) {
 
-
-            if (isNetworkAvailable() == true) {
-
-                // get the listview
-                expListView = (ExpandableListView) findViewById(R.id.lvExp);
-
-                // preparing list data
-                prepareListData();
-
-                listAdapter = new ExpandableListAdapter(this, listDataHeader, listDataChild);
-
-                // setting list adapter
-                expListView.setAdapter(listAdapter);
-
-                Toast toast = Toast.makeText(getApplicationContext(), "Data refreshed", Toast.LENGTH_SHORT);
+            //Check network connection
+            if (isNetworkAvailable()) {
+                new GetServerInfoTask().execute(servers);
+                Toast toast = Toast.makeText(getApplicationContext(), "Refreshing data", Toast.LENGTH_SHORT);
                 toast.show();
             }
-
             else {
                 Toast toast = Toast.makeText(getApplicationContext(), "No network connection detected", Toast.LENGTH_SHORT);
                 toast.show();
             }
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
+    /**
+     * Check network connection
+     * @return true if network is connected
+     */
     private boolean isNetworkAvailable() {
         ConnectivityManager connectivityManager
                 = (ConnectivityManager) getSystemService(Context.CONNECTIVITY_SERVICE);
@@ -124,64 +157,10 @@ public class MainActivity extends ActionBarActivity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-    private void getData() {
-        if (isNetworkAvailable() == true) {
-            check(servers);
-        }
-        else {
-            Toast toast = Toast.makeText(getApplicationContext(), "No network connection detected", Toast.LENGTH_SHORT);
-            toast.show();
-        }
-    }
-
-    public static void check(ArrayList<Server> list) {
-        for (Server temp : list) {
-            ServerInfo serverInfo = QueriEd.serverQuery(temp.getGameType(), temp.getIP(), temp.getPort());
-            if (serverInfo == null) {
-                temp.setPlayerCount("0");
-                temp.setMaxPlayerCount("0");
-            }
-            else {
-                temp.setPlayerCount(serverInfo.getPlayerCount());
-                temp.setMaxPlayerCount(serverInfo.getMaxPlayers());
-            }
-            ArrayList playerInfo = (ArrayList) QueriEd.playerQuery(temp.getGameType(), temp.getIP(), temp.getPort());
-            ArrayList<String> tempName = new ArrayList<String>();
-            if(playerInfo != null && playerInfo.size() > 0) {
-                iter = playerInfo.iterator();
-                while(iter.hasNext()) {
-                    PlayerInfo pInfo = (PlayerInfo) iter.next();
-                    String name = pInfo.getName();
-                    if (name != "") {
-                        tempName.add(name);
-                    }
-                }
-                temp.setPlayers(tempName);
-            }
-            else {
-                temp.setPlayers(tempName);
-            }
-        }
-    }
-
-    private void prepareListData() {
-        listDataHeader = new ArrayList<String>();
-        listDataChild = new HashMap<String, List<String>>();
-
-        getData();
-
-        // Adding header & child data
-        int x = 0;
-        for(Server temp : servers) {
-            String spacer = "";
-            int spaces = 30;
-            spaces = spaces - temp.getName().length();
-            for (int i = 0; i < spaces; i++) {
-                spacer = spacer + " ";
-            }
-            listDataHeader.add(temp.getName() + spacer + temp.getPlayerCount() + "/" + temp.getMaxPlayerCount() + " players");
-            listDataChild.put(listDataHeader.get(x), temp.getPlayers());
-            x++;
-        }
+    private void displayPlayers(ArrayList<String> players, String name) {
+        Intent intent = new Intent(this, DisplayPlayersActivity.class);
+        intent.putExtra("Players", players);
+        intent.putExtra("Name", name);
+        startActivity(intent);
     }
 }

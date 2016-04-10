@@ -13,6 +13,7 @@ public class Server {
     private Button button;
     private String playerCount;
     private String maxPlayerCount;
+    private String map;
     private ArrayList<String> players;
 
     public Server(String name, String gameType, String IP, int port) {
@@ -40,6 +41,10 @@ public class Server {
         this.players = players;
     }
 
+    public void setMap(String map) {
+        this.map = map;
+    }
+
     public void setButtonID(int ID) {
         this.buttonID = ID;
     }
@@ -50,6 +55,10 @@ public class Server {
 
     public String getName() {
         return name;
+    }
+
+    public String getMap() {
+        return map;
     }
 
     public String getGameType() {

@@ -18,7 +18,7 @@ public class DisplayPlayersActivity extends ActionBarActivity {
 
         Intent intent = getIntent();
         ArrayList<String> playerStrings = intent.getStringArrayListExtra("Players");
-        String title = intent.getStringExtra("Name");
+        String title = intent.getStringExtra("Name") + " - " + intent.getStringExtra("Map");
 
         setTitle(title);
 

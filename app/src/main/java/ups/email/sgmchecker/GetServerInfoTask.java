@@ -26,6 +26,7 @@ public class GetServerInfoTask extends AsyncTask<ArrayList<Server>, Server, Arra
             else {
                 temp.setPlayerCount(serverInfo.getPlayerCount());
                 temp.setMaxPlayerCount(serverInfo.getMaxPlayers());
+                temp.setMap(serverInfo.getMap());
             }
             ArrayList playerInfo = (ArrayList) QueriEd.playerQuery(temp.getGameType(), temp.getIP(), temp.getPort());
             ArrayList<String> tempName = new ArrayList<String>();

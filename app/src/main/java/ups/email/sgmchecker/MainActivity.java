@@ -82,7 +82,7 @@ public class MainActivity extends ActionBarActivity {
                         if (temp2.getButtonID() == id) {
                             //Gonna wanna make a new activity to show the players on the server.
                             //Call method to do so, pass it server's player list
-                            displayPlayers(temp2.getPlayers(), temp2.getName());
+                            displayPlayers(temp2.getPlayers(), temp2.getName(), temp2.getMap());
                         }
                     }
                 }
@@ -157,10 +157,11 @@ public class MainActivity extends ActionBarActivity {
         return activeNetworkInfo != null && activeNetworkInfo.isConnected();
     }
 
-    private void displayPlayers(ArrayList<String> players, String name) {
+    private void displayPlayers(ArrayList<String> players, String name, String map) {
         Intent intent = new Intent(this, DisplayPlayersActivity.class);
         intent.putExtra("Players", players);
         intent.putExtra("Name", name);
+        intent.putExtra("Map", map);
         startActivity(intent);
     }
 }
